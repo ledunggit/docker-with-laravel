@@ -1,0 +1,71 @@
+version: "3.9"
+
+#NETWORK
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+
+  #CONTAINER PHP
+  php:
+    container_name: php-product
+    build:
+      dockerfile: Dockerfile
+      context: ./php
+    user: root
+    restart: unless-stopped
+    networks:
+      - app-network
+    volumes:
+      - ./myapp:/var/www/myapp
+
+  #CONTAINER HTTPD
+  apache2:
+    container_name: apache2-product
+    image: "httpd:latest"
+    user: root
+    restart: unless-stopped
+    networks:
+      - app-network
+    volumes:
+      - ./myapp:/var/www/myapp
+      - ./config/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    ports:
+      - "80:80"
+
+  #CONTAINER MYSQL
+  mysql:
+    container_name: mysql-product
+    image: "mysql:latest"
+    restart: unless-stopped
+    networks:
+      - app-network
+    volumes:
+      - ./database:/var/lib/mysql
+      - ./config/my.cnf:/etc/mysql/my.cnf
+      #- ./app/data.sql:/home/data.sql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=laravelblog
+      - MYSQL_USER=ledung
+      - MYSQL_PASSWORD=Ledung362
+    ports:
+      - 3306:3306
+
+  #CONTAINER PHPMYADMIN
+  phpmyadmin:
+    container_name: phpmyadmin-product
+    image: "phpmyadmin:5.1-apache"
+    hostname: phpmyadmin
+    restart: unless-stopped
+    networks:
+      - app-network
+    ports:
+      - 8000:80
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOSTS=mysql
+      - MYSQL_ROOT_PASSWORD=root
+
